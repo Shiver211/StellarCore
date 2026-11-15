@@ -65,7 +65,9 @@ tasks.processResources.configure {
     inputs.property("mcversion", minecraft.mcVersion.get())
 
     filesMatching("mcmod.info") {
-        expand(mapOf("version" to project.version, "mcversion" to minecraft.mcVersion.get()))
+        expand(mapOf("version" to project.version, "mcversion" to minecraft.mcVersion.get())) {
+            escapeBackslash = true // 保留 JSON 字符串中的 \n 等转义。
+        }
     }
 }
 
