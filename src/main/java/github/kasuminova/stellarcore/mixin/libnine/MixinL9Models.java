@@ -1,7 +1,6 @@
 package github.kasuminova.stellarcore.mixin.libnine;
 
 import com.google.gson.JsonObject;
-import github.kasuminova.stellarcore.client.integration.libnine.L9ModScanner;
 import github.kasuminova.stellarcore.client.resource.ResourceExistingCache;
 import github.kasuminova.stellarcore.common.config.StellarCoreConfig;
 import github.kasuminova.stellarcore.mixin.util.StellarCoreResourcePack;
@@ -18,15 +17,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Map;
 
-@SuppressWarnings("InstantiationOfUtilityClass")
 @Mixin(value = L9Models.class, remap = false)
 public class MixinL9Models implements StellarCoreResourcePack {
 
+    // 保留 1.5.22 的实例注册路径，资源重载时仍会清理类型缓存。
     @Unique
     private static final L9Models stellar_core$INSTANCE = new L9Models();
 
     @Unique
-    private static volatile Map<String, Map<ResourceLocation, Boolean>> stellar_core$validTypeCache = null;
+    private static final Object stellar_core$NO_MODEL_TYPE = new Object();
+
+    @Unique
+    private static volatile Map<ResourceLocation, Object> stellar_core$validTypeCache = null;
 
     @SuppressWarnings("RedundantCast")
     @Inject(method = "<init>", at = @At("RETURN"))
@@ -46,21 +48,20 @@ public class MixinL9Models implements StellarCoreResourcePack {
             return;
         }
 
-        // Skip non-libnine mods
-        if (!L9ModScanner.isValidMod(resource.getNamespace())) {
-            cir.setReturnValue(Boolean.FALSE);
-        }
+        // 保留原版的实际识别行为：资源包也可以提供来自其他命名空间的 LibNine 模型。
+        final Object modelType = stellar_core$getValidTypeCache().computeIfAbsent(
+                resource, MixinL9Models::stellar_core$readModelType);
+        cir.setReturnValue(modelType != stellar_core$NO_MODEL_TYPE && modelType.equals(type));
+    }
 
-        cir.setReturnValue(stellar_core$getValidTypeCache().computeIfAbsent(type, (key) -> new NonBlockingHashMap<>())
-                .computeIfAbsent(resource, (key) -> {
-                    try {
-                        JsonObject model = ResourceUtils.getAsJson(resource).getAsJsonObject();
-                        return model.has("9s") && model.get("9s").getAsString().equals(type);
-                    } catch (Exception var3) {
-                        return false;
-                    }
-                })
-        );
+    @Unique
+    private static Object stellar_core$readModelType(final ResourceLocation resource) {
+        try {
+            final JsonObject model = ResourceUtils.getAsJson(resource).getAsJsonObject();
+            return model.has("9s") ? model.get("9s").getAsString() : stellar_core$NO_MODEL_TYPE;
+        } catch (Exception ignored) {
+            return stellar_core$NO_MODEL_TYPE;
+        }
     }
 
     @Override
@@ -84,7 +85,7 @@ public class MixinL9Models implements StellarCoreResourcePack {
     }
 
     @Unique
-    private static Map<String, Map<ResourceLocation, Boolean>> stellar_core$getValidTypeCache() {
+    private static Map<ResourceLocation, Object> stellar_core$getValidTypeCache() {
         if (stellar_core$validTypeCache == null) {
             synchronized (L9Models.class) {
                 if (stellar_core$validTypeCache == null) {
