@@ -16,9 +16,9 @@
 | CTM 纹理完整路径缓存、线程安全元数据缓存 | 上游 v1.6.8 的 `MixinResourceUtil`，文件最后变更为 `1c138ceb2394b3e8702010a5271704840cb1e9b7`；未移植连接规则缓存，资源重载时清理路径缓存。 |
 | LibNine 按资源缓存模型类型 | 上游同一提交的 `MixinL9Models`；保留 1.5.22 的资源重载注册实例，并保留跨命名空间识别模型的原实际行为。 |
 
-旧 bansoukou 包还增加了 `ParallelModelLoaderBlackListPredefined`、
-`DirectoryResourcePackIndex` 两个配置字段，但没有对应实现；维护版保留字段及默认值，
-没有新增消费逻辑。并行模型黑名单仍使用原有 `ParallelModelLoaderBlackList`。
+维护版已删除旧 bansoukou 包中没有对应实现的 `ParallelModelLoaderBlackListPredefined`、
+`DirectoryResourcePackIndex` 两个无效配置项。
+并行模型黑名单仍使用原有 `ParallelModelLoaderBlackList`。
 本轮未加入目录/ZIP 索引、模型磁盘缓存或 HEI 专项优化。
 
 原始文件 SHA-256：

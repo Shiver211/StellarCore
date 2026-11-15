@@ -132,18 +132,6 @@ public class Performance {
         @Config.Name("WipeModelCache")
         public boolean wipeModelCache = true;
 
-        // 保留 bansoukou 配置覆盖包中的字段；1.5.22 的加载器仍只读取下方用户黑名单。
-        @Config.Comment("Legacy overlay setting, retained for configuration compatibility.")
-        @Config.Name("ParallelModelLoaderBlackListPredefined")
-        public String[] parallelModelLoaderBlackListPredefined = {
-                "blusunrize.immersiveengineering.client.models.obj.IEOBJLoader",
-                "blusunrize.immersiveengineering.client.models.multilayer.MultiLayerLoader",
-                "blusunrize.immersiveengineering.client.models.smart.ConnLoader",
-                "blusunrize.immersiveengineering.client.models.smart.FeedthroughLoader",
-                "blusunrize.immersiveengineering.client.models.ModelConfigurableSides$Loader",
-                "electroblob.wizardry.client.model.ModelLoaderBookshelf"
-        };
-
         @Config.Comment({
                 "Defining which ModelLoader cannot be safely asynchronized to allow StellarCore to load models",
                 "using a synchronous approach, usually requires no modification to it."
@@ -286,11 +274,6 @@ public class Performance {
         @Config.RequiresMcRestart
         @Config.Name("ResourceExistStateCache")
         public boolean resourceExistStateCache = true;
-
-        // 原覆盖包只有配置字段，没有目录索引实现；此轮保持相同行为。
-        @Config.Comment("Legacy overlay setting; directory indexing is not included in this maintenance build.")
-        @Config.Name("DirectoryResourcePackIndex")
-        public boolean directoryResourcePackIndex = true;
 
         @Config.Comment({
                 "(Client/Server Performance) Use parallelStream to handle randomTick operations on world blocks to improve performance in more player environments.",
