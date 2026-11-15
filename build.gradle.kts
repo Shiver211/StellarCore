@@ -60,6 +60,7 @@ tasks.injectTags.configure {
 
 // Put the version from gradle into mcmod.info
 tasks.processResources.configure {
+    filteringCharset = "UTF-8"
     inputs.property("version", project.version)
     inputs.property("mcversion", minecraft.mcVersion.get())
 

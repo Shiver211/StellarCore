@@ -33,7 +33,8 @@ bansoukou/StellarCore-1.5.22.jar
 ## 构建
 
 使用 JDK 17 运行 Gradle 8.2，编译产物仍为 Java 8 字节码。
-恢复旧构建所需的变更只有 RFG 1.4.2、GTNH HTTPS Maven 和取消 Azul 厂商限制；
+恢复旧构建所需的变更包括 RFG 1.4.2、GTNH HTTPS Maven、取消 Azul 厂商限制，
+以及显式使用 UTF-8 处理资源，避免 Windows 默认编码损坏中文模组描述。
 GitHub Actions 同步使用 JDK 17。
 
 ```powershell
