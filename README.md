@@ -1,5 +1,8 @@
 # StellarCore Project
 
+本分支维护 GreedyCraft 2 使用的 **1.5.22**，基线为 **2025-04-30** 的 `4747761`。
+补丁来源、构建方式、安装和回退步骤见 [MAINTENANCE.md](MAINTENANCE.md)。
+
 This mod requires **MixinBooter 8.0+** and **ConfigAnyTime 2.0+** to work!
 
 ### Introduction
