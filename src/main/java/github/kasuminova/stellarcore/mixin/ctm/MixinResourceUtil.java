@@ -1,0 +1,87 @@
+package github.kasuminova.stellarcore.mixin.ctm;
+
+import github.kasuminova.stellarcore.common.config.StellarCoreConfig;
+import github.kasuminova.stellarcore.shaded.org.jctools.maps.NonBlockingHashMap;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.ResourceLocation;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import team.chisel.ctm.client.texture.IMetadataSectionCTM;
+import team.chisel.ctm.client.util.ResourceUtil;
+
+import java.util.Map;
+
+@Mixin(value = ResourceUtil.class, remap = false)
+public class MixinResourceUtil {
+
+    @Mutable
+    @Shadow
+    @Final
+    private static Map<ResourceLocation, IMetadataSectionCTM> metadataCache;
+
+    @Unique
+    private static IMetadataSectionCTM stellar_core$absent = null;
+
+    @Unique
+    private static final NonBlockingHashMap<String, ResourceLocation> stellar_core$absoluteLocations = new NonBlockingHashMap<>();
+
+    @Redirect(method = {
+            "getMetadata(Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;)Lteam/chisel/ctm/client/texture/IMetadataSectionCTM;",
+            "getResource(Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;)Lnet/minecraft/client/resources/IResource;"
+        }, at = @At(value = "INVOKE",
+            target = "Lteam/chisel/ctm/client/util/ResourceUtil;toResourceLocation(Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;)Lnet/minecraft/util/ResourceLocation;"), require = 1)
+    private static ResourceLocation stellar_core$reuseAbsoluteLocation(final TextureAtlasSprite sprite) {
+        final String name = sprite.getIconName();
+        ResourceLocation location = stellar_core$absoluteLocations.get(name);
+        if (location == null) {
+            location = ResourceUtil.spriteToAbsolute(new ResourceLocation(name));
+            final ResourceLocation previous = stellar_core$absoluteLocations.putIfAbsent(name, location);
+            if (previous != null) {
+                location = previous;
+            }
+        }
+        // The caller still invokes spriteToAbsolute; it is idempotent for an absolute location.
+        return location;
+    }
+
+    @Redirect(method = "invalidateCaches", at = @At(value = "INVOKE", target = "Ljava/util/Map;clear()V"), require = 1)
+    private static void stellar_core$clearLocations(final Map<?, ?> metadata) {
+        metadata.clear();
+        stellar_core$absoluteLocations.clear();
+    }
+
+    @Inject(method = "<clinit>", at = @At("RETURN"))
+    private static void injectClinit(final CallbackInfo ci) {
+        if (!StellarCoreConfig.PERFORMANCE.vanilla.parallelModelLoader
+            && !StellarCoreConfig.PERFORMANCE.ctm.textureMetadataHandler) {
+            return;
+        }
+        stellar_core$absent = new IMetadataSectionCTM.V1();
+        metadataCache = new NonBlockingHashMap<>();
+    }
+
+    @Redirect(
+            method = "getMetadata(Lnet/minecraft/util/ResourceLocation;)Lteam/chisel/ctm/client/texture/IMetadataSectionCTM;",
+            at = @At(value = "INVOKE", target = "Ljava/util/Map;get(Ljava/lang/Object;)Ljava/lang/Object;")
+    )
+    private static Object stellar_core$redirectGet(final Map<ResourceLocation, IMetadataSectionCTM> map, final Object key) {
+        final IMetadataSectionCTM cached = map.get((ResourceLocation) key);
+        return cached == stellar_core$absent ? null : cached;
+    }
+
+    @Redirect(
+            method = "getMetadata(Lnet/minecraft/util/ResourceLocation;)Lteam/chisel/ctm/client/texture/IMetadataSectionCTM;",
+            at = @At(value = "INVOKE", target = "Ljava/util/Map;put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")
+    )
+    private static Object stellar_core$redirectPut(final Map<ResourceLocation, IMetadataSectionCTM> map, final Object key, final Object value) {
+        return map.put((ResourceLocation) key, value == null ? stellar_core$absent : (IMetadataSectionCTM) value);
+    }
+
+}
