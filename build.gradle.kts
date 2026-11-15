@@ -171,6 +171,7 @@ repositories {
 }
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
     annotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:0.4.2")
     compileOnly("com.github.bsideup.jabel:jabel-javac-plugin:0.4.2")
     // workaround for https://github.com/bsideup/jabel/issues/174

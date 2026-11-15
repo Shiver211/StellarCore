@@ -24,6 +24,9 @@ public class BakedQuadPool extends AsyncCanonicalizePool<BakedQuad> {
     }
 
     public void canonicalizeAsync(final Runnable task) {
+        if (QuadPoolLifecycle.isFrozen()) {
+            return;
+        }
         worker.offer(new CanonicalizeTask<>(() -> {
             task.run();
             return null;
@@ -32,6 +35,9 @@ public class BakedQuadPool extends AsyncCanonicalizePool<BakedQuad> {
 
     @Override
     protected BakedQuad canonicalizeInternal(final BakedQuad target) {
+        if (QuadPoolLifecycle.isFrozen()) {
+            return target;
+        }
         return pool.addOrGet(target);
     }
 

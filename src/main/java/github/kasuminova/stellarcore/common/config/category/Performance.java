@@ -105,6 +105,14 @@ public class Performance {
         public int hudCachingFPSLimit = 20;
 
         @Config.Comment({
+                "Disable HudCaching in specified dimension IDs.",
+                "Example: 0 for Overworld, -1 for Nether, 1 for The End.",
+                "Use this to avoid render issues in dimensions with custom rendering."
+        })
+        @Config.Name("HudCachingDimensionBlacklist")
+        public int[] hudCachingDimensionBlacklist = {};
+
+        @Config.Comment({
                 "(Client Performance | Experimental) A feature that helps speed up game loading by modifying the model loader's code to enable parallel loading capabilities (5s ~ 40s faster).",
                 "Incompatible with some mod's models because they use their own model loader, if you encounter a missing model, please report it to the StellarCore author for manual compatibility.",
                 "Compatible model loader: CTM，LibNine，TConstruct",
@@ -123,6 +131,18 @@ public class Performance {
         @Config.RequiresMcRestart
         @Config.Name("WipeModelCache")
         public boolean wipeModelCache = true;
+
+        // 保留 bansoukou 配置覆盖包中的字段；1.5.22 的加载器仍只读取下方用户黑名单。
+        @Config.Comment("Legacy overlay setting, retained for configuration compatibility.")
+        @Config.Name("ParallelModelLoaderBlackListPredefined")
+        public String[] parallelModelLoaderBlackListPredefined = {
+                "blusunrize.immersiveengineering.client.models.obj.IEOBJLoader",
+                "blusunrize.immersiveengineering.client.models.multilayer.MultiLayerLoader",
+                "blusunrize.immersiveengineering.client.models.smart.ConnLoader",
+                "blusunrize.immersiveengineering.client.models.smart.FeedthroughLoader",
+                "blusunrize.immersiveengineering.client.models.ModelConfigurableSides$Loader",
+                "electroblob.wizardry.client.model.ModelLoaderBookshelf"
+        };
 
         @Config.Comment({
                 "Defining which ModelLoader cannot be safely asynchronized to allow StellarCore to load models",
@@ -267,6 +287,11 @@ public class Performance {
         @Config.Name("ResourceExistStateCache")
         public boolean resourceExistStateCache = true;
 
+        // 原覆盖包只有配置字段，没有目录索引实现；此轮保持相同行为。
+        @Config.Comment("Legacy overlay setting; directory indexing is not included in this maintenance build.")
+        @Config.Name("DirectoryResourcePackIndex")
+        public boolean directoryResourcePackIndex = true;
+
         @Config.Comment({
                 "(Client/Server Performance) Use parallelStream to handle randomTick operations on world blocks to improve performance in more player environments.",
                 "Note: Possibly affecting the random logic of the original game."
@@ -337,6 +362,15 @@ public class Performance {
     }
 
     public static class Forge {
+
+        @Config.Comment({
+                "Freeze global quad and unpacked-data pools after the loading reset.",
+                "Keeps startup deduplication, then prevents runtime models from repopulating the pools.",
+                "Migrated from GCT-Core's Freeze StellarCore Quad Pools After Load patch."
+        })
+        @Config.RequiresMcRestart
+        @Config.Name("FreezeQuadPoolsAfterLoad")
+        public boolean freezeQuadPoolsAfterLoad = true;
 
         @Config.Comment({
                 "(Client/Server Performance) ASMDataTable Annotation Map builds use half of the CPU instead of all of it,",

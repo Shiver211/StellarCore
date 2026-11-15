@@ -31,6 +31,9 @@ public class StellarUnpackedDataPool {
 
     @SuppressWarnings("ArrayEquality")
     public static void canonicalizeAsync(final float[][][] unpackedData, final Consumer<float[][][]> callback) {
+        if (QuadPoolLifecycle.isFrozen()) {
+            return;
+        }
         POOL_LEVEL1.canonicalizeAsync(unpackedData, floatsL1 -> {
             final int level = getLevel();
             // Level 2
@@ -55,10 +58,16 @@ public class StellarUnpackedDataPool {
     }
 
     public static void canonicalizeDeferred(final DeferredCanonicalizable<float[][][]> canonicalizable) {
+        if (QuadPoolLifecycle.isFrozen()) {
+            return;
+        }
         POOL_LEVEL1.canonicalizeDeferred(canonicalizable);
     }
 
     public static float[][][] canonicalize(float[][][] data) {
+        if (QuadPoolLifecycle.isFrozen()) {
+            return data;
+        }
         final int level = getLevel();
 
         if (level == 1) {
@@ -84,10 +93,16 @@ public class StellarUnpackedDataPool {
     }
 
     public static void canonicalizeAsync(final int[] data, final Consumer<int[]> callback) {
+        if (QuadPoolLifecycle.isFrozen()) {
+            return;
+        }
         VERTEX_POOL.canonicalizeAsync(data, callback);
     }
 
     public static int[] canonicalize(int[] data) {
+        if (QuadPoolLifecycle.isFrozen()) {
+            return data;
+        }
         return VERTEX_POOL.canonicalize(data);
     }
 
@@ -133,6 +148,9 @@ public class StellarUnpackedDataPool {
     }
 
     public static void reset() {
+        if (StellarCoreConfig.PERFORMANCE.forge.freezeQuadPoolsAfterLoad) {
+            QuadPoolLifecycle.freeze();
+        }
         int canonicalizationLevel = getLevel();
         long currentPoolProcessedCount = getProcessedUnpackedDataCount();
         long uniqueCount = getUnpackedDataUniqueCount();
@@ -196,6 +214,9 @@ public class StellarUnpackedDataPool {
 
         @Override
         protected T canonicalizeInternal(final T target) {
+            if (QuadPoolLifecycle.isFrozen()) {
+                return target;
+            }
             return pool.addOrGet(target);
         }
 
@@ -207,8 +228,8 @@ public class StellarUnpackedDataPool {
         @Override
         protected void clearPool() {
             pool.clear();
+            pool.trim();
             if (trim) {
-                pool.trim();
                 trim = false;
                 getWorker().stop();
             }
@@ -269,6 +290,9 @@ public class StellarUnpackedDataPool {
 
         @Override
         protected int[] canonicalizeInternal(final int[] target) {
+            if (QuadPoolLifecycle.isFrozen()) {
+                return target;
+            }
             return pool.addOrGet(target);
         }
 
@@ -285,6 +309,7 @@ public class StellarUnpackedDataPool {
         @Override
         protected void clearPool() {
             pool.clear();
+            pool.trim();
         }
 
     }
