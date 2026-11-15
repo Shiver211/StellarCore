@@ -1,0 +1,7 @@
+{
+    "package": "github.kasuminova.stellarcore.mixin.base",
+    "refmap": "mixins.stellar_core.refmap.json",
+    "minVersion": "0.8",
+    "compatibilityLevel": "JAVA_8",
+    "client": ["MixinDirectoryResourcePack"]
+}

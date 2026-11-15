@@ -15,6 +15,10 @@ public class StellarCoreLateMixinLoader implements ILateMixinLoader {
     private static final Map<String, BooleanSupplier> MIXIN_CONFIGS = new LinkedHashMap<>();
 
     static {
+        addModdedMixinCFG("mixins.stellar_core_base_resources.json", "base",
+                () -> StellarCoreConfig.PERFORMANCE.vanilla.resourceExistStateCache && StellarCoreConfig.PERFORMANCE.vanilla.directoryResourcePackIndex);
+        addModdedMixinCFG("mixins.stellar_core_resourceloader.json", "resourceloader",
+                () -> StellarCoreConfig.PERFORMANCE.vanilla.resourceExistStateCache && StellarCoreConfig.PERFORMANCE.vanilla.directoryResourcePackIndex);
         addModdedMixinCFG("mixins.stellar_core_advancedrocketry.json",       "advancedrocketry");
         addModdedMixinCFG("mixins.stellar_core_ae.json",                     "appliedenergistics2");
         addModdedMixinCFG("mixins.stellar_core_ancientspellcraft.json",      "ancientspellcraft");

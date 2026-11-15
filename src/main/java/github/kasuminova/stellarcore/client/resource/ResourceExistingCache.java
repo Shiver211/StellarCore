@@ -18,6 +18,7 @@ public class ResourceExistingCache {
     }
 
     public static void clear() {
+        DirectoryResourceIndex.disable();
         List<StellarCoreResourcePack> persistentResourcePacks = new ObjectArrayList<>();
         RESOURCE_PACKS.forEach(resourcePack -> {
             resourcePack.stellar_core$disableCache();
@@ -31,11 +32,13 @@ public class ResourceExistingCache {
     }
 
     public static void enableCache() {
+        DirectoryResourceIndex.enable();
         RESOURCE_PACKS.forEach(StellarCoreResourcePack::stellar_core$enableCache);
         StellarLog.LOG.info("[StellarCore-ResourceExistingCache] Resource cache enabled.");
     }
 
     public static void disableCache() {
+        DirectoryResourceIndex.disable();
         RESOURCE_PACKS.forEach(StellarCoreResourcePack::stellar_core$disableCache);
         StellarLog.LOG.info("[StellarCore-ResourceExistingCache] Resource cache disabled.");
     }

@@ -3,7 +3,7 @@
 仓库：https://github.com/Shiver211/StellarCore/tree/gc2-1.5.22
 
 基线固定为 `47477615e390eed9a55c140e8af57f8cf209da70`，提交时间
-`2025-04-30 22:57:48 +08:00`，原版本号 `1.5.22`。维护版本为 `1.5.22-gc2.4`。
+`2025-04-30 22:57:48 +08:00`，原版本号 `1.5.22`。维护版本为 `1.5.22-gc2.5`。
 后续移植在 `gc2-1.5.22` 上单独提交，不合并新版 master 的全部改动。
 
 ## 已迁移内容
@@ -18,15 +18,18 @@
 | 默认资源包类路径索引（gc2.2） | 每次模型加载前一次扫描所有命名空间；仅完整索引的确定未命中跳过 `Class.getResource`。命中保留原加载器与路径校验，OptiFine 资源提供逻辑仍先执行，资源重载/加载结束释放索引，同时关闭存在性探测流。 |
 | 特殊资源来源兼容（gc2.3） | 对无法枚举的非 `file:` URL 单独保留原 `URLClassLoader.findResource` 查询，索引未命中时再检查这些来源。修复 Forge `asmgen:/` 和 ZenUtils `jar:` 地址使整个索引回退的问题；加载结束关闭辅助加载器，记录其他禁用原因。 |
 | 成功定位后复用 URL（gc2.4） | 默认资源包通过路径校验后，直接打开已定位 URL，避免 `Class.getResourceAsStream` 再次搜索类路径。保留 OptiFine 优先资源流、路径校验异常回退、开流失败返回 null；局部变量不跨调用共享。 |
+| 共享外部资源目录索引（gc2.5） | ResourceLoader 与 B.A.S.E 在模型加载期间共用目录快照；保留各自 isFile/exists 语义、资源优先级和原开流逻辑，加载结束及资源重载释放。特殊路径、符号链接或扫描失败回退原查询。 |
 
-维护版已删除旧 bansoukou 包中没有对应实现的 `ParallelModelLoaderBlackListPredefined`、
-`DirectoryResourcePackIndex` 两个无效配置项。
+早期维护版已删除旧 bansoukou 包中没有对应实现的 `ParallelModelLoaderBlackListPredefined`、
+`DirectoryResourcePackIndex` 两个无效配置项；gc2.5 为本次实际实现重新加入后者，默认开启。
 并行模型黑名单仍使用原有 `ParallelModelLoaderBlackList`。
-索引仅作用于默认资源包的类路径查询，覆盖父加载器和 Manifest 附加类路径；
+默认资源包索引覆盖父加载器和 Manifest 附加类路径；
 未知加载器、无法读取的 jar 或指向资源的旧式 JarIndex 保留原查询。
 gc2.3 的 `complete=true` 表示已覆盖全部查询来源，包括按需查询的 `fallbackSources`，
 并非所有来源都被转换成了文件索引。虚拟来源中的新增资源仍由原协议处理器决定。
-未加入外部资源包索引、模型磁盘缓存或 HEI 专项优化。
+gc2.5 的目录索引仅接入 ResourceLoader 1.5.3 和 B.A.S.E 3.14.0，
+同时受 `ResourceExistStateCache` 与 `DirectoryResourcePackIndex` 控制。
+未加入模型磁盘缓存或 HEI 专项优化。
 
 原始文件 SHA-256：
 
@@ -48,14 +51,16 @@ GitHub Actions 同步使用 JDK 17。
 ```powershell
 $env:JAVA_HOME = 'C:\Program Files\Java\jdk-17'
 .\gradlew.bat test build --no-daemon --console=plain
-# 游戏安装包：build/libs/StellarCore-1.5.22-gc2.4.jar
+# 游戏安装包：build/libs/StellarCore-1.5.22-gc2.5.jar
 # 不要安装 -dev、-sources 或 -javadoc 包。
 ```
 
-本地 `test build` 已通过，共 19 项 JUnit 测试。原有 3 项覆盖模型池生命周期及字符串池；
-新增 15 项覆盖索引查询、父加载器、Manifest、目录变更、重建、多版本 jar、
+本地 `test build` 已通过，共 24 项 JUnit 测试。3 项覆盖模型池生命周期及字符串池；
+16 项覆盖类路径索引和默认资源包，包括查询、父加载器、Manifest、目录变更、重建、多版本 jar、
 未知来源回退、并行查询、探测流关闭、原版资源索引回退及动态 ResourceLocation，
 以及虚拟资源增删、关闭后回退、带目录或类文件后缀的 `jar:` URL。
+gc2.5 新增 5 项覆盖目录快照的本机大小写规则、isFile/exists、特殊路径回退、
+重建、并发共享和诊断模式。实际 ResourceLoader/B.A.S.E jar 的注入离线验证通过。
 gc2.4 新增直接打开已定位 URL、IOException 返回 null 的测试；原版及 OptiFine G5
 字节码的 Mixin 注入离线验证通过，确认成功分支替换一次、异常回退分支仍保留。
 CTM 1.0.2.31、LibNine 1.2.2 的目标类和方法已核对。
@@ -68,6 +73,11 @@ gc2.3 使用从实际游戏抓取的类路径和 Forge 原协议处理器离线�
 ## 安装与回退
 
 在游戏退出后操作。备份放到 `minecraft` 外，避免被模组或补丁加载器再次扫描。
+
+gc2.5 升级：备份并移走 gc2.4，安装 `StellarCore-1.5.22-gc2.5.jar`。
+仅回退目录索引时，将 `general.performance.vanilla.DirectoryResourcePackIndex` 设为 false 后重启。
+诊断参数 `-Dstellarcore.verifyDirectoryResourceIndex=true` 会逐次比对原文件查询并返回原结果，
+只用于兼容性检查；性能测试应移除该参数。
 
 gc2.3 升级 gc2.4：备份并移出旧 gc2.3 jar，安装 gc2.4 jar，配置不变。
 本次与 GCTCore 的 GeckoLib 骨架索引、NuclearCraft 资源合并优化组合测试。
@@ -94,6 +104,15 @@ gc2.3 升级 gc2.4：备份并移出旧 gc2.3 jar，安装 gc2.4 jar，配置不
 回退时移走新星核 jar，并恢复以上 5 个备份文件。
 
 ## 验证启动收益
+
+2026-11-15 的 gc2.5 首轮诊断 `Fsla8o1gQa`：同一资源目录构建一次，9462 条目录/文件记录，
+耗时 99ms；487141 次查询与原 isFile/exists 比对，0 差异。
+随后 `lNbRPF6u6Z` 已确认诊断关闭，目录构建 89ms，MOD_LOAD 为 195.924s。
+Cleanroom 的 RELOAD_BLOCKS + RELOAD_ITEMS + RELOAD_BAKING 合计 39.407s，
+此前 gc2.4 的 `zAnlNZmvfv` 同边界为 46.772s；主线程两个目录包查询采样合计 4.268s → 1.340s。
+两轮之间还关闭了 Windows 上的 FoamFix Linux 链接补丁；这是单轮观测，不能将全部阶段差值归因于目录索引。
+诊断版与性能版的 POSTINIT 也相差 9.812s，与模型目录查询分属不同阶段。
+F3+T 游戏内重载和同条件多轮对照尚待完成，不能宣称已得到稳定节省时间。
 
 在相同 Java、启动参数、模组和资源包下比较旧版与维护版，各采样至少 3 次。
 检查主菜单、HUD 黑名单维度和 F3+T 资源重载后的纹理，再对比相同阶段的 Spark 数据。

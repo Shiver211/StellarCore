@@ -275,6 +275,11 @@ public class Performance {
         @Config.Name("ResourceExistStateCache")
         public boolean resourceExistStateCache = true;
 
+        @Config.Comment("(Client Performance) Share a resources directory snapshot between ResourceLoader and B.A.S.E during model loading. Requires ResourceExistStateCache.")
+        @Config.RequiresMcRestart
+        @Config.Name("DirectoryResourcePackIndex")
+        public boolean directoryResourcePackIndex = true;
+
         @Config.Comment({
                 "(Client/Server Performance) Use parallelStream to handle randomTick operations on world blocks to improve performance in more player environments.",
                 "Note: Possibly affecting the random logic of the original game."
