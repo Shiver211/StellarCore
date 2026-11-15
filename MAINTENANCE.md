@@ -54,21 +54,20 @@ CTM 1.0.2.31、LibNine 1.2.2 的目标类和方法已核对。
 
 在游戏退出后操作。备份放到 `minecraft` 外，避免被模组或补丁加载器再次扫描。
 
-1. 备份 `mods/StellarCore-1.5.22.jar`、`bansoukou/StellarCore-1.5.22.jar`、
-   `config/GCTCore/GCTMixin.cfg` 和 `config/stellar_core.cfg`。
-2. 将旧 mods 星核包移出实例，放入 `StellarCore-1.5.22-gc2.1.jar`。
+1. 备份 `mods/StellarCore-1.5.22.jar`、`mods/GCT-Core-1.0.42.jar`、
+   `bansoukou/StellarCore-1.5.22.jar`、`config/GCTCore/GCTMixin.cfg` 和 `config/stellar_core.cfg`。
+2. 将旧 mods 星核包移出实例，放入 `StellarCore-1.5.22-gc2.1.jar`，
+   同时替换本批清理星核 mixin 后的 `GCT-Core-1.0.42.jar`。
 3. 将旧 bansoukou 星核包移出实例；其中的类覆盖已迁入源码。
-4. 编辑 `config/GCTCore/GCTMixin.cfg`，将旧补丁开关改为：
+4. 清理 `GCTMixin.cfg` 的旧 `Freeze StellarCore Quad Pools After Load` 配置项，
+   以及 `stellar_core.cfg` 中上述两个无效配置项。
+5. 在星核 `general.performance.forge` 下使用 `B:FreezeQuadPoolsAfterLoad=true`，
+   保留现有 HUD 维度黑名单和其他配置。
 
-   ```properties
-   B:"Freeze StellarCore Quad Pools After Load"=false
-   ```
+本批 GCT-Core 已移除星核 mixin、注册项、辅助类、旧开关和编译桩。
+若仅更换星核而继续使用未清理的旧 GCT-Core，则须将旧冻结开关设为 `false`。
 
-5. 新版星核会在 `Performance` → `Forge` 下生成默认开启的
-   `B:FreezeQuadPoolsAfterLoad=true`。保留现有 HUD 维度黑名单和其他星核配置。
-   GCT-Core 继续使用现有版本即可。
-
-回退时移走新 jar，并恢复以上 4 个备份文件。
+回退时移走新星核 jar，并恢复以上 5 个备份文件。
 
 ## 验证启动收益
 
