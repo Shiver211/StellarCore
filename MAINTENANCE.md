@@ -32,7 +32,8 @@ bansoukou/StellarCore-1.5.22.jar
 
 ## 构建
 
-使用 JDK 17 运行 Gradle 8.2，编译产物仍为 Java 8 字节码。
+使用 JDK 17 运行 Gradle 8.2。字节码版本保持原 1.5.22 的情况：
+主体为 Java 8，生成的版本常量类 `Tags` 为 Java 17。
 恢复旧构建所需的变更包括 RFG 1.4.2、GTNH HTTPS Maven、取消 Azul 厂商限制，
 以及显式使用 UTF-8 处理资源并保留 JSON 转义，避免损坏中文模组描述和换行。
 GitHub Actions 同步使用 JDK 17。
