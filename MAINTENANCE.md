@@ -3,7 +3,7 @@
 仓库：https://github.com/Shiver211/StellarCore/tree/gc2-1.5.22
 
 基线固定为 `47477615e390eed9a55c140e8af57f8cf209da70`，提交时间
-`2025-04-30 22:57:48 +08:00`，原版本号 `1.5.22`。维护版本为 `1.5.22-gc2.6`。
+`2025-04-30 22:57:48 +08:00`，原版本号 `1.5.22`。维护版本为 `1.5.22-gc2.7`。
 后续移植在 `gc2-1.5.22` 上单独提交，不合并新版 master 的全部改动。
 
 ## 已迁移内容
@@ -20,6 +20,7 @@
 | 成功定位后复用 URL（gc2.4） | 默认资源包通过路径校验后，直接打开已定位 URL，避免 `Class.getResourceAsStream` 再次搜索类路径。保留 OptiFine 优先资源流、路径校验异常回退、开流失败返回 null；局部变量不跨调用共享。 |
 | 共享外部资源目录索引（gc2.5） | ResourceLoader 与 B.A.S.E 在模型加载期间共用目录快照；保留各自 isFile/exists 语义、资源优先级和原开流逻辑，加载结束及资源重载释放。特殊路径、符号链接或扫描失败回退原查询。 |
 | IGI 物品图标帧缓冲缓存（gc2.6） | 文字绘制后将延迟图标绘入同一 FBO，沿用 HUDFPS；修复 CanoeEdition 图标纹理生成后的嵌套 FBO 恢复并保留目标 alpha。`HUDFramebufferItemCache` 默认开启，重启生效；关闭后恢复逐帧图标绘制。 |
+| 路径校验异常时复用 URL（gc2.7） | 修复 Windows 对 JAR 资源路径校验抛出 IOException 后再次搜索类路径的问题。正常开流与异常回退通过 `@Share` 复用同次调用的 URL，保留路径校验、OptiFine 优先资源流及开流失败返回 null。 |
 
 早期维护版已删除旧 bansoukou 包中没有对应实现的 `ParallelModelLoaderBlackListPredefined`、
 `DirectoryResourcePackIndex` 两个无效配置项；gc2.5 为本次实际实现重新加入后者，默认开启。
@@ -52,7 +53,7 @@ GitHub Actions 同步使用 JDK 17。
 ```powershell
 $env:JAVA_HOME = 'C:\Program Files\Java\jdk-17'
 .\gradlew.bat test build --no-daemon --console=plain
-# 游戏安装包：build/libs/StellarCore-1.5.22-gc2.6.jar
+# 游戏安装包：build/libs/StellarCore-1.5.22-gc2.7.jar
 # 不要安装 -dev、-sources 或 -javadoc 包。
 ```
 
@@ -69,6 +70,12 @@ gc2.5 新增 5 项覆盖目录快照的本机大小写规则、isFile/exists、�
 gc2.4 新增直接打开已定位 URL、IOException 返回 null 的测试；原版及 OptiFine G5
 字节码的 Mixin 注入离线验证通过，确认成功分支替换一次、异常回退分支仍保留。
 CTM 1.0.2.31、LibNine 1.2.2 的目标类和方法已核对。
+
+gc2.7 的 `test build` 通过，24 项 JUnit 测试无失败。另对真实原版 DefaultResourcePack
+注入修复并执行正常开流、Windows JAR 路径校验异常、开流失败、缺失资源及路径校验失败：
+正常和异常分支均已替换；包含 64 次并发调用的 69 次调用共查找资源 69 次。
+启动时间收益尚未实测。
+
 gc2.2 已核对原版和 OptiFine G5 补丁后的 `getResourceStream` 注入点与 SRG 映射。
 gc2.2 已启动实测，但日志为 `complete=false`，主要索引优化未启用。
 gc2.3 使用从实际游戏抓取的类路径和 Forge 原协议处理器离线复现为
@@ -78,6 +85,8 @@ gc2.3 使用从实际游戏抓取的类路径和 Forge 原协议处理器离线�
 ## 安装与回退
 
 在游戏退出后操作。备份放到 `minecraft` 外，避免被模组或补丁加载器再次扫描。
+
+gc2.7 升级：备份并移走旧星核 jar，安装 `StellarCore-1.5.22-gc2.7.jar`，配置不变。
 
 gc2.6 升级：替换星核 jar，保留 `HUDFramebuffer=true` 与原 `HUDFPS`。
 仅回退图标缓存时，将 `general.performance.ingameinfoxml.HUDFramebufferItemCache` 设为 false 后重启。

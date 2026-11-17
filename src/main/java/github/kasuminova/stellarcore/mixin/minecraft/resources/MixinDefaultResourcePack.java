@@ -1,6 +1,7 @@
 package github.kasuminova.stellarcore.mixin.minecraft.resources;
 
-import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.Share;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import github.kasuminova.stellarcore.client.resource.ClasspathAssetIndex;
 import github.kasuminova.stellarcore.common.util.StellarLog;
 import github.kasuminova.stellarcore.mixin.util.StellarCoreResourcePack;
@@ -73,20 +74,23 @@ public abstract class MixinDefaultResourcePack implements StellarCoreResourcePac
     // 仅拦截实际的类路径查找；OptiFine 在此前提供的资源流和原路径校验照常执行。
     @Redirect(method = "getResourceStream", at = @At(value = "INVOKE",
             target = "Ljava/lang/Class;getResource(Ljava/lang/String;)Ljava/net/URL;", remap = false), require = 1)
-    private URL stellar_core$findClasspathResource(final Class<?> owner, final String path) {
+    private URL stellar_core$findClasspathResource(final Class<?> owner, final String path,
+                                                   @Share("locatedResource") final LocalRef<URL> locatedResource) {
         ClasspathAssetIndex index = stellar_core$assetIndex;
-        return index != null && owner == DefaultResourcePack.class && index.definitelyMissing(path)
+        URL url = index != null && owner == DefaultResourcePack.class && index.definitelyMissing(path)
                 ? null : owner.getResource(path);
+        locatedResource.set(url);
+        return url;
     }
 
-    // ordinal 0 是路径校验成功后的开流；catch 中的原回退不变。
+    // 正常分支与路径校验的 IOException 回退都复用本次调用的 URL，避免重复搜索类路径。
     @Redirect(method = "getResourceStream", at = @At(value = "INVOKE",
             target = "Ljava/lang/Class;getResourceAsStream(Ljava/lang/String;)Ljava/io/InputStream;",
-            ordinal = 0, remap = false), require = 1)
+            remap = false), require = 2)
     private InputStream stellar_core$openLocatedResource(final Class<?> owner, final String path,
-                                                        @Local final URL url) {
+                                                        @Share("locatedResource") final LocalRef<URL> locatedResource) {
         try {
-            return url.openStream();
+            return locatedResource.get().openStream();
         } catch (IOException ignored) {
             // Class.getResourceAsStream 打开失败时返回 null，不进入路径校验的回退分支。
             return null;

@@ -1,5 +1,6 @@
 package github.kasuminova.stellarcore.client.resource;
 
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import github.kasuminova.stellarcore.mixin.minecraft.resources.MixinDefaultResourcePack;
 import net.minecraft.client.resources.ResourceIndex;
 import net.minecraft.util.ResourceLocation;
@@ -22,7 +23,7 @@ public class DefaultResourceProbeTest {
     @Test
     public void locatedUrlIsOpenedDirectlyAndOpenFailureReturnsNull() throws Exception {
         Method open = MixinDefaultResourcePack.class.getDeclaredMethod("stellar_core$openLocatedResource",
-                Class.class, String.class, URL.class);
+                Class.class, String.class, LocalRef.class);
         open.setAccessible(true);
         final int[] opened = {0};
         URL url = new URL(null, "probe:/resource", new URLStreamHandler() {
@@ -37,12 +38,17 @@ public class DefaultResourceProbeTest {
                 };
             }
         });
+        LocalRef<URL> locatedResource = new LocalRef<URL>() {
+            private URL value = url;
+            @Override public URL get() { return value; }
+            @Override public void set(URL value) { this.value = value; }
+        };
         // 名称故意不存在：必须使用传入的 URL，不能重新按名称查找。
-        try (InputStream stream = (InputStream) open.invoke(new Probe(), getClass(), "/absent", url)) {
+        try (InputStream stream = (InputStream) open.invoke(new Probe(), getClass(), "/absent", locatedResource)) {
             assertNotNull(stream);
             assertEquals(42, stream.read());
         }
-        assertNull(open.invoke(new Probe(), getClass(), "/absent", url));
+        assertNull(open.invoke(new Probe(), getClass(), "/absent", locatedResource));
         assertEquals(2, opened[0]);
     }
 
