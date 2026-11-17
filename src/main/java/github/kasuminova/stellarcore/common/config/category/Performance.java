@@ -696,6 +696,14 @@ public class Performance {
         @Config.Name("HUDFramebuffer")
         public boolean hudFrameBuffer = false;
 
+        @Config.Comment({
+                "(Client Performance) Cache item icons together with the IGI HUD instead of drawing them every frame.",
+                "Uses HUDFPS and preserves icons above text. Requires HUDFramebuffer."
+        })
+        @Config.Name("HUDFramebufferItemCache")
+        @Config.RequiresMcRestart
+        public boolean hudFrameBufferItemCache = true;
+
         @Config.Name("HUDFPS")
         @Config.Comment("Select a restricted HUD FPS that is only valid when HUDFramebuffer is enabled.")
         @Config.RangeInt(min = 5, max = 60)

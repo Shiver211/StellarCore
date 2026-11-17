@@ -3,6 +3,7 @@ package github.kasuminova.stellarcore.mixin.igi;
 import com.github.lunatrius.ingameinfo.InGameInfoCore;
 import com.github.lunatrius.ingameinfo.client.gui.overlay.Info;
 import com.github.lunatrius.ingameinfo.handler.ConfigurationHandler;
+import github.kasuminova.stellarcore.client.hudcaching.IGIFramebufferContext;
 import github.kasuminova.stellarcore.client.util.RenderUtils;
 import github.kasuminova.stellarcore.common.config.StellarCoreConfig;
 import github.kasuminova.stellarcore.mixin.util.IMixinInGameInfoCore;
@@ -19,14 +20,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(InGameInfoCore.class)
 public class MixinInGameInfoCore implements IMixinInGameInfoCore {
 
     @Unique
-    private final List<Runnable> stellar_core$postDrawList = new LinkedList<>();
+    private final List<Runnable> stellar_core$postDrawList = new ArrayList<>();
 
     @Shadow(remap = false) @Final private List<Info> info;
 
@@ -113,6 +114,19 @@ public class MixinInGameInfoCore implements IMixinInGameInfoCore {
         GlStateManager.pushMatrix();
         GlStateManager.scale(ConfigurationHandler.scale, ConfigurationHandler.scale, ConfigurationHandler.scale);
         info.forEach(Info::draw);
+        if (StellarCoreConfig.PERFORMANCE.inGameInfoXML.hudFrameBufferItemCache) {
+            // 文字已画完，FBO 和 IGI 缩放仍有效；物品继续覆盖在文字上方。
+            stellar_core$postDrawing = true;
+            IGIFramebufferContext.renderingItems = true;
+            try {
+                stellar_core$postDrawList.forEach(Runnable::run);
+            } finally {
+                IGIFramebufferContext.renderingItems = false;
+                stellar_core$postDrawing = false;
+                // 合成到屏幕后不再逐帧重复执行这些物品快照。
+                stellar_core$postDrawList.clear();
+            }
+        }
         GlStateManager.popMatrix();
 
         Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(false);

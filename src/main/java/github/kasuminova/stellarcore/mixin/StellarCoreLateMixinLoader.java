@@ -54,6 +54,8 @@ public class StellarCoreLateMixinLoader implements ILateMixinLoader {
         addModdedMixinCFG("mixins.stellar_core_ic2.json",                    "ic2");
         addModdedMixinCFG("mixins.stellar_core_ic2_energynet.json",          "ic2");
         addModdedMixinCFG("mixins.stellar_core_igi.json",                    "ingameinfoxml");
+        addModdedMixinCFG("mixins.stellar_core_igi_itemcache.json",          "ingameinfoxml",
+                () -> StellarCoreConfig.PERFORMANCE.inGameInfoXML.hudFrameBufferItemCache);
         addModdedMixinCFG("mixins.stellar_core_immersiveengineering.json",   "immersiveengineering");
         addModdedMixinCFG("mixins.stellar_core_jei.json",                    "jei", () -> StellarCoreConfig.PERFORMANCE.vanilla.stitcherCache);
         addModdedMixinCFG("mixins.stellar_core_threng.json",                 "threng");

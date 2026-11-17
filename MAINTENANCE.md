@@ -3,7 +3,7 @@
 仓库：https://github.com/Shiver211/StellarCore/tree/gc2-1.5.22
 
 基线固定为 `47477615e390eed9a55c140e8af57f8cf209da70`，提交时间
-`2025-04-30 22:57:48 +08:00`，原版本号 `1.5.22`。维护版本为 `1.5.22-gc2.5`。
+`2025-04-30 22:57:48 +08:00`，原版本号 `1.5.22`。维护版本为 `1.5.22-gc2.6`。
 后续移植在 `gc2-1.5.22` 上单独提交，不合并新版 master 的全部改动。
 
 ## 已迁移内容
@@ -19,6 +19,7 @@
 | 特殊资源来源兼容（gc2.3） | 对无法枚举的非 `file:` URL 单独保留原 `URLClassLoader.findResource` 查询，索引未命中时再检查这些来源。修复 Forge `asmgen:/` 和 ZenUtils `jar:` 地址使整个索引回退的问题；加载结束关闭辅助加载器，记录其他禁用原因。 |
 | 成功定位后复用 URL（gc2.4） | 默认资源包通过路径校验后，直接打开已定位 URL，避免 `Class.getResourceAsStream` 再次搜索类路径。保留 OptiFine 优先资源流、路径校验异常回退、开流失败返回 null；局部变量不跨调用共享。 |
 | 共享外部资源目录索引（gc2.5） | ResourceLoader 与 B.A.S.E 在模型加载期间共用目录快照；保留各自 isFile/exists 语义、资源优先级和原开流逻辑，加载结束及资源重载释放。特殊路径、符号链接或扫描失败回退原查询。 |
+| IGI 物品图标帧缓冲缓存（gc2.6） | 文字绘制后将延迟图标绘入同一 FBO，沿用 HUDFPS；修复 CanoeEdition 图标纹理生成后的嵌套 FBO 恢复并保留目标 alpha。`HUDFramebufferItemCache` 默认开启，重启生效；关闭后恢复逐帧图标绘制。 |
 
 早期维护版已删除旧 bansoukou 包中没有对应实现的 `ParallelModelLoaderBlackListPredefined`、
 `DirectoryResourcePackIndex` 两个无效配置项；gc2.5 为本次实际实现重新加入后者，默认开启。
@@ -51,7 +52,7 @@ GitHub Actions 同步使用 JDK 17。
 ```powershell
 $env:JAVA_HOME = 'C:\Program Files\Java\jdk-17'
 .\gradlew.bat test build --no-daemon --console=plain
-# 游戏安装包：build/libs/StellarCore-1.5.22-gc2.5.jar
+# 游戏安装包：build/libs/StellarCore-1.5.22-gc2.6.jar
 # 不要安装 -dev、-sources 或 -javadoc 包。
 ```
 
@@ -59,6 +60,10 @@ $env:JAVA_HOME = 'C:\Program Files\Java\jdk-17'
 16 项覆盖类路径索引和默认资源包，包括查询、父加载器、Manifest、目录变更、重建、多版本 jar、
 未知来源回退、并行查询、探测流关闭、原版资源索引回退及动态 ResourceLocation，
 以及虚拟资源增删、关闭后回退、带目录或类文件后缀的 `jar:` URL。
+
+gc2.6 另使用实际 IGI 3.0.0.20 与新星核 Mixin 做离线转换和调用链验证：
+确认重复行修复、冷纹理的 FBO/viewport 恢复、绘制顺序、缩放、状态变化及开关回退；
+1000 个未刷新帧中无物品绘制、NBT 哈希/复制或额外 GL 查询。游戏类型及 GL 状态使用替身，画面和 FPS 仍需游戏内验收。
 gc2.5 新增 5 项覆盖目录快照的本机大小写规则、isFile/exists、特殊路径回退、
 重建、并发共享和诊断模式。实际 ResourceLoader/B.A.S.E jar 的注入离线验证通过。
 gc2.4 新增直接打开已定位 URL、IOException 返回 null 的测试；原版及 OptiFine G5
@@ -73,6 +78,10 @@ gc2.3 使用从实际游戏抓取的类路径和 Forge 原协议处理器离线�
 ## 安装与回退
 
 在游戏退出后操作。备份放到 `minecraft` 外，避免被模组或补丁加载器再次扫描。
+
+gc2.6 升级：替换星核 jar，保留 `HUDFramebuffer=true` 与原 `HUDFPS`。
+仅回退图标缓存时，将 `general.performance.ingameinfoxml.HUDFramebufferItemCache` 设为 false 后重启。
+搭配 GCT-Core 的 `Enable IGI Duplicate Overlay Fix`，每行及附带图标只入队一次。
 
 gc2.5 升级：备份并移走 gc2.4，安装 `StellarCore-1.5.22-gc2.5.jar`。
 仅回退目录索引时，将 `general.performance.vanilla.DirectoryResourcePackIndex` 设为 false 后重启。
